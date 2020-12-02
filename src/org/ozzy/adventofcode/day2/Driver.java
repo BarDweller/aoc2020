@@ -36,6 +36,11 @@ public class Driver {
             return count >= minCount;
         }
 
+        public boolean isValidPart1Alt() {
+            long count = password.chars().filter(a -> a==target).count();
+            return count<=maxCount && count>=minCount;
+        }
+
         public boolean isValidPart2() {
             return (password.charAt(minCount-1)==target && password.charAt(maxCount-1)!=target) ||
                     (password.charAt(minCount-1)!=target && password.charAt(maxCount-1)==target);
@@ -52,6 +57,13 @@ public class Driver {
                 .count();
 
         System.out.println("Valid (Part1): "+validPart1);
+
+        long validPart1Alt = lines.stream()
+                .map(PasswordLine::new)
+                .filter(PasswordLine::isValidPart1Alt)
+                .count();
+
+        System.out.println("Valid (Part1/Alt): "+validPart1Alt);
 
         long validPart2 = lines.stream()
                 .map(PasswordLine::new)
