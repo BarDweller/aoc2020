@@ -1,6 +1,5 @@
 package org.ozzy.adventofcode.day4;
 
-import org.ozzy.adventofcode.common.AppendableMapArray;
 import org.ozzy.adventofcode.common.FileReader;
 
 import java.nio.file.Path;
