@@ -23,7 +23,7 @@ public class Driver {
             int i = Integer.parseInt(line,2);
 
             //not needed! ;)
-            //int row = (i & 116)>>3;
+            //int row = (i & 1016)>>3;
             //int col = (i & 7);
 
             //track highest id for part 1
