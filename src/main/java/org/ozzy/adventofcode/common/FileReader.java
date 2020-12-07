@@ -24,11 +24,11 @@ public class FileReader {
     }
 
     public static List<Integer> getFileAsListOfInt(Path input) throws IOException {
-        return Files.lines(input).map(a->Integer.parseInt(a)).collect(Collectors.toList());
+        return Files.lines(input).map(Integer::parseInt).collect(Collectors.toList());
     }
 
     public static List<Integer> getFileAsSortedListOfInt(Path input) throws IOException {
-        return Files.lines(input).map(a->Integer.parseInt(a)).sorted().collect(Collectors.toList());
+        return Files.lines(input).map(Integer::parseInt).sorted().collect(Collectors.toList());
     }
 
 

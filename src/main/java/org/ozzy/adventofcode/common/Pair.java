@@ -7,4 +7,7 @@ public class Pair<T1,T2>{
         this.a=a;
         this.b=b;
     }
+    public String toString(){
+        return "{"+a+","+b+"}";
+    }
 }
