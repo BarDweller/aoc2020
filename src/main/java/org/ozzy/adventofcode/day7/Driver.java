@@ -57,7 +57,7 @@ public class Driver {
 
     public void part1(Path input) throws Exception {
         Map<String,Bag> bags = Files.lines(input).map(Bag::new).collect(Collectors.toMap(Bag::getName, Function.identity()));
-        System.out.println("part 1: "+bags.keySet().stream().map(bags::get).filter(a -> a.getAllNestedBagTypes(bags).contains("shiny gold")).count());
+        System.out.println("part 1: "+bags.values().stream().filter(a -> a.getAllNestedBagTypes(bags).contains("shiny gold")).count());
     }
 
     public void part2(Path input) throws Exception {
