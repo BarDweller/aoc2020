@@ -150,6 +150,8 @@ public class Driver {
     }
 
     public static void main(String[] args) throws Exception {
+        long time = System.currentTimeMillis();
         Driver d = new Driver();
+        System.out.println("Elapsed : "+(System.currentTimeMillis()-time));
     }
 }
