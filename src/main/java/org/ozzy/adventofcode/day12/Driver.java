@@ -55,8 +55,7 @@ public class Driver {
     }
     void rotateWaypointLeft(Pair<Integer,Integer> waypoint){
         int tempa = waypoint.a;
-        int tempb = waypoint.b;
-        waypoint.a = -tempb;
+        waypoint.a = -waypoint.b;
         waypoint.b = tempa;
     }
 
