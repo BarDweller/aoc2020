@@ -94,7 +94,25 @@ public class Driver {
         validTickets.add(myTicket);
 
         //assume all tickets have same number of values =), build map of possible columns for each rule offset.
-        Map<Integer, List<Integer>> possibleColumns = EntryStream.of(StreamEx.of(rules).map(rule -> IntStreamEx.range(0, myTicket.size()).filter(i -> validTickets.stream().map(ticket -> ticket.get(i)).allMatch(rule::isValueAcceptable))).toList()).mapValues(is -> is.boxed().toList()).toMap();
+        Map<Integer, List<Integer>> possibleColumns = EntryStream.of(rules)
+                //convert rule into list of columns that were valid for the rule.
+                //by:
+                //iterating over each possible column index
+                //converting each ticket to only the value for the current column index
+                //then filtering by allMatch using the current rule with the value from the ticket for that column
+                //boxed to get us out of the IntStreamEx back to StreamEx<Integer>
+                //then toList so our map value is List<Integer>
+                .mapValues(rule -> IntStreamEx.range(0, myTicket.size())
+                    .filter(i -> validTickets.stream()
+                            .map(ticket -> ticket.get(i))
+                            .allMatch(rule::isValueAcceptable)
+                    )
+                    .boxed()
+                    .toList()
+                )
+                //finally, toMap uses the index for the rule in the rules list, as the map index
+                //and corresponding possible column list as it's value.
+                .toMap();
 
         //assume that we can resolve the possible columns by iteratively assigning single columns
         //to their targets.. this won't work if the solution requires us to examine multiple potential
@@ -126,7 +144,14 @@ public class Driver {
 
         //now double dereference the rule->column->ticketvalue to resolve the final list of actual values,
         //then reduce to create the final product.
-        long part2 = LongStreamEx.of(EntryStream.of(rules).filterValues(i -> i.description.startsWith("departure")).map(e -> myTicket.get(resultMap.get(e.getKey()))).map(Long::valueOf).toList()).reduce(1,(a,b)->a*b);
+        List<Long> resolvedValues = EntryStream.of(rules)
+                //drop any rules that don't start "departure"
+                .filterValues(i -> i.description.startsWith("departure"))
+                //convert the rule, using the rule index, as a key into the resultMap, and that value
+                //as an index into the myTicket list, to obtain the double dereferenced result.
+                .map(e -> myTicket.get(resultMap.get(e.getKey()))).map(Long::valueOf).toList();
+        //reduce the resolved Values via multiply
+        long part2 = LongStreamEx.of(resolvedValues).reduce(1,(a,b)->a*b);
 
         System.out.println("Part 2: "+part2);
     }
