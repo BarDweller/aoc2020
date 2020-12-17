@@ -117,30 +117,17 @@ public class Driver {
         //assume that we can resolve the possible columns by iteratively assigning single columns
         //to their targets.. this won't work if the solution requires us to examine multiple potential
         //paths.. (but it doesn't look like the result set is going to be that mean).
-        Map<Integer, Integer> resultMap = new HashMap<>();
-        boolean done=false;
-        while (!done){
-            List<Integer> found = new ArrayList<>();
-            //hunt for any single possibilities, and lock them in.
-            for(int idx=0;idx<possibleColumns.size(); idx++){
-                if(possibleColumns.get(idx).size()==1){
-                    int lastFound = possibleColumns.get(idx).get(0);
-                    resultMap.put(idx, lastFound);
-                    found.add(lastFound);
-                }
-            }
-            //remove the ones we just handled
-            if(found.size()>0){
-                for(int idx=0;idx<possibleColumns.size(); idx++){
-                    possibleColumns.get(idx).removeAll(found);
-                }
-            }
-            //we're done when all possibles are now empty.
-            done=true;
-            for(int idx=0;idx<possibleColumns.size(); idx++){
-                done&=possibleColumns.get(idx).size()==0;
-            }
+        while(possibleColumns.values().stream().filter(columns -> columns.size()==1).count() != possibleColumns.size()){
+            StreamEx.of(possibleColumns.entrySet())
+                    //find the singletons
+                    .filter(e -> e.getValue().size()==1)
+                    //remove the singletons from the possible choices that still have more than 1 choice
+                    .forEach(e -> possibleColumns.values().stream()
+                            .filter(s -> s.size()>1)
+                            .forEach(s -> s.removeAll(e.getValue())));
         }
+        //collapse the Map<Integer,List<Integer>> where we now know each value is size 1, to Map<Integer,Integer>
+        Map<Integer,Integer> resultMap = EntryStream.of(possibleColumns).mapValues(i -> i.get(0)).toMap();
 
         //now double dereference the rule->column->ticketvalue to resolve the final list of actual values,
         //then reduce to create the final product.
