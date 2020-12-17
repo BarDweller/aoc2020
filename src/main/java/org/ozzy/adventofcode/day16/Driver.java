@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Driver {
 
@@ -73,7 +74,6 @@ public class Driver {
             }
         });
 
-        AtomicInteger errorSum = new AtomicInteger(0);
         int score = StreamEx.of(otherTickets)
                 .map(ticket ->IntStreamEx.of(ticket)
                         .filter( value -> rules.stream().noneMatch(rule -> rule.isValueAcceptable(value)))
@@ -114,20 +114,37 @@ public class Driver {
                 //and corresponding possible column list as it's value.
                 .toMap();
 
-        //assume that we can resolve the possible columns by iteratively assigning single columns
-        //to their targets.. this won't work if the solution requires us to examine multiple potential
-        //paths.. (but it doesn't look like the result set is going to be that mean).
-        while(possibleColumns.values().stream().filter(columns -> columns.size()==1).count() != possibleColumns.size()){
-            StreamEx.of(possibleColumns.entrySet())
-                    //find the singletons
-                    .filter(e -> e.getValue().size()==1)
-                    //remove the singletons from the possible choices that still have more than 1 choice
-                    .forEach(e -> possibleColumns.values().stream()
-                            .filter(s -> s.size()>1)
-                            .forEach(s -> s.removeAll(e.getValue())));
-        }
-        //collapse the Map<Integer,List<Integer>> where we now know each value is size 1, to Map<Integer,Integer>
-        Map<Integer,Integer> resultMap = EntryStream.of(possibleColumns).mapValues(i -> i.get(0)).toMap();
+
+        //sort possibleColumn map by length of value list, shortest first.
+        TreeMap<Integer, List<Integer>> sortedMap = new TreeMap<>(Comparator.comparingInt(o -> possibleColumns.get(o).size()));
+        sortedMap.putAll(possibleColumns);
+
+        //process the possibleColumn map in pairs, keeping only the distinct value from the list for each pair.
+        Map<Integer, Integer> resultMap =
+                 //get the first element (already solved, as it has only a single value)
+                 StreamEx.of(sortedMap.entrySet().stream().limit(1))
+                 //append the remaining elements, solving as we go
+                .append(
+                        //stream the map as a stream of entries, and zip it with a stream
+                        //of itself, that skipped the first entry.
+                        StreamEx.of(sortedMap.entrySet())
+                                 .zipWith(StreamEx.of(sortedMap.entrySet()).skip(1))
+                        //we now have a sliding window of 2 over the sorted map, represented as
+                        //a stream of key-value pairs, where the key is the lhs of the pair, and the value is the rhs
+                        //we will convert each pair of pairs into a single pair, built with a value list that's the
+                        //result of dropping the intersection of the two value lists.
+                        .mapKeyValue((k, v) -> new AbstractMap.SimpleImmutableEntry<>(
+                                //keep the rhs key
+                                v.getKey(),
+                                //build the value list by filtering the rhs value list to drop the lhs values
+                                StreamEx.of(v.getValue()).filter(i -> !k.getValue().contains(i)).toList()))
+                        //StreamEx doesn't support concat of streams, so we'll flatten this stream
+                        //to a list, so we can use the append function.
+                        .toList())
+                //The resulting stream is now of ruleindx -> list<columnidx> where the list is always length 1
+                //convert the list<columnidx> into just columnidx by unwrapping it from the list.
+                .toMap(Map.Entry::getKey, v ->v.getValue().get(0));
+
 
         //now double dereference the rule->column->ticketvalue to resolve the final list of actual values,
         //then reduce to create the final product.
